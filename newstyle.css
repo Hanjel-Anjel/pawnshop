@@ -1,0 +1,146 @@
+/* ======= Global Style ======= */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            display: flex;
+        }
+
+        /* ======= Header ======= */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 250px;
+            width: calc(100% - 250px);
+            height: 70px;
+            background: #ffffff;
+            color: #222;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .header h1 {
+            font-size: 1.4rem;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .header span {
+            font-size: 0.95rem;
+            color: #555;
+            background: #f1f1f1;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .toggle-btn {
+            border: none;
+            background: none;
+            font-size: 1.5rem;
+            color: #555;
+            cursor: pointer;
+        }
+
+        /* ======= Sidebar ======= */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100vh;
+            background: linear-gradient(180deg, #00416a, #1c92d2);
+            color: #fff;
+            padding-top: 70px;
+            transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .sidebar.shrink {
+            width: 80px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar ul li {
+            margin: 10px 0;
+        }
+
+        .sidebar ul li a {
+            display: flex;
+            align-items: center;
+            color: #fff;
+            padding: 12px 20px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar ul li a:hover,
+        .sidebar ul li a.active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .sidebar ul li a i {
+            width: 25px;
+            text-align: center;
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .sidebar.shrink ul li a span.link-text {
+            display: none;
+        }
+
+        /* ======= Logout Section ======= */
+        .logout {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logout .btn {
+            width: 80%;
+            border-radius: 25px;
+            background: #ff4b5c;
+            border: none;
+            font-weight: 500;
+        }
+
+        .logout .btn:hover {
+            background: #e63946;
+        }
+
+        /* ======= Main Content ======= */
+        .main-content {
+            margin-left: 250px;
+            padding: 100px 40px;
+            width: calc(100% - 250px);
+            transition: all 0.3s ease;
+        }
+
+        .main-content.expand {
+            margin-left: 80px;
+            width: calc(100% - 80px);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
