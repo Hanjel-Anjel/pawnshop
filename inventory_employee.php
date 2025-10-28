@@ -627,7 +627,7 @@ include('header_employee.php');
                             echo "<td>" . date('M d, Y', strtotime($row['due_date'])) . "</td>";
                             echo "<td><div class='action-buttons'>";
                             echo "<button class='btn btn-primary btn-sm view-item' data-item-id='" . $row['item_id'] . "'><i class='bi bi-eye me-1'></i>View</button>";
-                            echo "<a href='edit_item.php?id=" . $row['item_id'] . "' class='btn btn-success btn-sm'><i class='bi bi-pencil me-1'></i>Edit</a>";
+                            echo "<a href='payment.php?item_id=" . $row['item_id'] . "' class='btn btn-success btn-sm'> <i class='bi bi-cash-coin me-1'></i>Pay</a>";
                             echo "</div></td>";
                             echo "</tr>";
                         }
