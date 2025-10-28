@@ -453,22 +453,54 @@ body::after {
 
 <body>
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg">
+<nav class="navbar navbar-expand-lg bg-light shadow-sm">
     <div class="container-fluid px-4">
         <a class="navbar-brand" href="#">
             <i class="fas fa-mobile-alt"></i>
             <span>ArMaTech Pawnshop</span>
         </a>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <!-- Example dashboard/home link -->
+                <li class="nav-item">
+                    <a class="nav-link" href="customer_dashboard.php">
+                        <i class="fas fa-home me-1"></i> Dashboard
+                    </a>
+                </li>
+
+                <!-- Add this dropdown for profile navigation -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user me-1"></i> Profile
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="profileDropdown">
+                        <li><a class="dropdown-item" href="edit_customer_info.php"><i class="fas fa-edit me-2"></i>Edit Profile</a></li>
+                        <li><a class="dropdown-item" href="customer_view_profile.php"><i class="fas fa-address-card me-2"></i>View Profile</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
         <div class="d-flex align-items-center">
-            <span class="user-info d-none d-md-inline-block">
-                <i class="fas fa-user-circle me-2"></i><?php echo htmlspecialchars($_SESSION['user_name']); ?>
+            <span class="user-info d-none d-md-inline-block me-3">
+                <i class="fas fa-user-circle me-2"></i>
+                <?php echo htmlspecialchars($_SESSION['user_name']); ?>
             </span>
+
             <button class="btn btn-logout" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="fas fa-sign-out-alt me-2"></i>Logout
             </button>
         </div>
+
+        <!-- Mobile menu toggle -->
+        <button class="navbar-toggler ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
     </div>
 </nav>
+
 
 <!-- Dashboard Container -->
 <div class="container dashboard-container">
