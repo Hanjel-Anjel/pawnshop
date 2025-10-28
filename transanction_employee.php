@@ -7,9 +7,10 @@ $current_user_name = $_SESSION['first_name'] ?? '';
 
 // Fetch transactions handled by the current user
 function fetchTransactions($conn, $userId, $dateFilter = 'all') {
-    $query = "
+     $query = "
         SELECT 
             t.transaction_id, 
+            t.transaction_type,
             t.transaction_date, 
             t.amount, 
             t.payment_method, 
@@ -661,6 +662,7 @@ $stats = getTransactionStats($conn, $current_user_id, $date_filter);
                     <tr>
                         <th>#</th>
                         <th>Transaction ID</th>
+                        <th>Type</th>
                         <th>Customer Name</th>
                         <th>Item</th>
                         <th>Date & Time</th>
@@ -689,6 +691,16 @@ $stats = getTransactionStats($conn, $current_user_id, $date_filter);
                                 <td>
                                     <span class="transaction-id">#<?php echo str_pad($row['transaction_id'], 6, '0', STR_PAD_LEFT); ?></span>
                                 </td>
+                                <td>
+                                    <span class="badge 
+                                        <?php 
+                                            echo ($row['transaction_type'] == 'Payment') ? 'bg-success' : 
+                                                (($row['transaction_type'] == 'New Loan') ? 'bg-primary' : 'bg-secondary');
+                                        ?>">
+                                        <?php echo htmlspecialchars($row['transaction_type']); ?>
+                                    </span>
+                                </td>
+
                                 <td><?php echo htmlspecialchars($row['customer_first_name'] . ' ' . $row['customer_last_name']); ?></td>
                                 <td><?php echo htmlspecialchars($row['item_model']); ?></td>
                                 <td><?php echo date('M d, Y h:i A', strtotime($row['transaction_date'])); ?></td>

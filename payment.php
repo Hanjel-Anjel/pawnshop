@@ -54,34 +54,40 @@ if (isset($_POST['submit_payment'])) {
         $conn->query("UPDATE items SET item_status = 'Fully Paid' WHERE item_id = $item_id");
     }
 
-    // ✅ Insert into transactions table
+    // ✅ Insert into transactions table for Payment
     $transaction_date = date("Y-m-d");
+    $transaction_type = 'Payment';
+    $customer_id = $item['customer_id'];
+    $amount = $amount_paid; // the amount paid by customer
+    $total_amount = $remaining_balance + $amount_paid; // optional tracking
 
-    // Calculate interest portion (optional logic — you can change this)
-    $interest_amount = $item['loan_amount'] * ($item['interest_rate'] / 100);
+    $insert_transaction = $conn->prepare("
+        INSERT INTO transactions 
+        (customer_id, item_id, transaction_date, amount, total_amount, payment_method, handled_by, transaction_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ");
 
-    $insert_transaction = $conn->prepare("INSERT INTO transactions 
-        (customer_id, item_id, transaction_date, amount, loan_amount, interest_amount, total_amount, payment_method, handled_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $insert_transaction->bind_param(
-        "iisddddsi",
-        $item['customer_id'],
+        $insert_transaction->bind_param(
+        "iissdsss", // ✅  payment_method is now a string (s)
+        $customer_id,
         $item_id,
         $transaction_date,
         $amount_paid,
-        $item['loan_amount'],
-        $interest_amount,
-        $amount_paid, // total paid this time
+        $total_amount,
         $payment_method,
-        $handled_by
+        $handled_by,
+        $transaction_type
     );
+
+
     $insert_transaction->execute();
 
-    // ✅ Redirect with success
-    $_SESSION['payment_success'] = true;
-    header("Location: inventory_employee.php");
-    exit();
-}
+
+        // Redirect with success
+        $_SESSION['payment_success'] = true;
+        header("Location: inventory_employee.php");
+        exit();
+    }
 
 ?>
 
