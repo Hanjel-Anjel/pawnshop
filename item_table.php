@@ -702,7 +702,16 @@ input[type=text], textarea {
                                       data-bs-toggle='modal' data-bs-target='#editItemModal'>
                                       <i class='bi bi-pencil'></i>
                                       </button>";
+                                      
+                                            if($row['item_status'] === 'Pawned') {
+                                                echo "<a href='payment.php?item_id=" . $row['item_id'] . "' 
+                                                    class='btn btn-success btn-sm m-1'>
+                                                    <i class='bi bi-cash-stack'></i> Pay
+                                                    </a>";
+                                            }
+
                                 echo "</td>";
+
                                 echo "</tr>";
                             }
                         } else {

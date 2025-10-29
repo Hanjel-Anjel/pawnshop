@@ -448,50 +448,233 @@ body::after {
         padding: 10px;
     }
 }
+
+ /* === NAVBAR DROPDOWN STYLES === */
+.navbar-toggler {
+    border-color: rgba(102, 126, 234, 0.5);
+    padding: 0.5rem;
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28102, 126, 234, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* User Dropdown Toggle */
+.user-dropdown {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white !important;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+}
+
+.user-dropdown:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.5);
+}
+
+.user-dropdown i {
+    font-size: 1.3rem;
+}
+
+.user-dropdown::after {
+    margin-left: 0.5rem;
+    border-top-color: white;
+}
+
+/* Custom Dropdown Menu */
+.custom-dropdown {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    padding: 0.5rem 0;
+    min-width: 250px;
+    margin-top: 0.5rem;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    animation: dropdownSlide 0.3s ease-out;
+}
+
+@keyframes dropdownSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.custom-dropdown .dropdown-header {
+    font-weight: 700;
+    color: #667eea;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.custom-dropdown .dropdown-item {
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    color: #333;
+}
+
+.custom-dropdown .dropdown-item i {
+    font-size: 1.125rem;
+    width: 24px;
+}
+
+.custom-dropdown .dropdown-item:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    padding-left: 1.5rem;
+    color: #667eea;
+}
+
+.custom-dropdown .dropdown-item.text-danger {
+    color: #dc3545 !important;
+}
+
+.custom-dropdown .dropdown-item.text-danger:hover {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(200, 35, 51, 0.1));
+    color: #dc3545 !important;
+}
+
+.custom-dropdown .dropdown-divider {
+    margin: 0.5rem 0;
+    opacity: 0.2;
+    border-top-color: #667eea;
+}
+
+/* Modal Adjustments */
+.modal-footer .btn-secondary {
+    background: #e0e0e0;
+    border: none;
+    color: #666;
+    border-radius: 25px;
+    padding: 10px 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.modal-footer .btn-secondary:hover {
+    background: #bdbdbd;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 991px) {
+    .user-dropdown {
+        justify-content: flex-start;
+        width: auto;
+        margin: 0.5rem 0;
+    }
+    
+    .custom-dropdown {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .user-dropdown span {
+        font-size: 0.9rem;
+    }
+    
+    .user-dropdown i {
+        font-size: 1.1rem;
+    }
+}
 </style>
 </head>
 
 <body>
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg bg-light shadow-sm">
+<nav class="navbar navbar-expand-lg">
     <div class="container-fluid px-4">
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="customer_dashboard.php">
             <i class="fas fa-mobile-alt"></i>
             <span>ArMaTech Pawnshop</span>
         </a>
 
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <!-- Example dashboard/home link -->
-                <li class="nav-item">
-                    <a class="nav-link" href="customer_dashboard.php">
-                        <i class="fas fa-home me-1"></i> Dashboard
-                    </a>
-                </li>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-                <!-- Add this dropdown for profile navigation -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <!-- User Dropdown -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-user me-1"></i> Profile
+                    <a class="nav-link dropdown-toggle user-dropdown" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle me-2"></i>
+                        <span><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="profileDropdown">
-                        <li><a class="dropdown-item" href="edit_customer_info.php"><i class="fas fa-edit me-2"></i>Edit Profile</a></li>
-                        <li><a class="dropdown-item" href="customer_view_profile.php"><i class="fas fa-address-card me-2"></i>View Profile</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end custom-dropdown" aria-labelledby="userDropdown">
+                        <li class="dropdown-header">
+                            <i class="fas fa-user-cog me-2"></i>
+                            Account Menu
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="customer_dashboard.php">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="customer_view_profile.php">
+                                <i class="fas fa-eye me-2"></i>View Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="edit_customer_info.php">
+                                <i class="fas fa-edit me-2"></i>Edit Profile
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a>
+                        </li>
                     </ul>
                 </li>
             </ul>
         </div>
+    </div>
+</nav>
 
-        <div class="d-flex align-items-center">
-            <span class="user-info d-none d-md-inline-block me-3">
-                <i class="fas fa-user-circle me-2"></i>
-                <?php echo htmlspecialchars($_SESSION['user_name']); ?>
-            </span>
-
-            <button class="btn btn-logout" data-bs-toggle="modal" data-bs-target="#logoutModal">
-                <i class="fas fa-sign-out-alt me-2"></i>Logout
-            </button>
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logoutModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Logout
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-sign-out-alt" style="font-size: 3rem; color: #ffc107; margin-bottom: 1rem;"></i>
+                <p style="font-size: 1.1rem; color: #666;">Are you sure you want to logout?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="logout.php" class="btn btn-logout">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
         </div>
+    </div>
+</div>
 
         <!-- Mobile menu toggle -->
         <button class="navbar-toggler ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 

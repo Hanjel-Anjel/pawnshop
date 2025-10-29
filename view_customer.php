@@ -15,7 +15,17 @@ if (isset($_GET['id'])) {
         echo "<p><strong>First Name:</strong> " . htmlspecialchars($customer['first_name']) . "</p>";
         echo "<p><strong>Email:</strong> " . htmlspecialchars($customer['email']) . "</p>";
         echo "<p><strong>Phone:</strong> " . htmlspecialchars($customer['phone_no']) . "</p>";
-        echo "<p><strong>Address:</strong> " . htmlspecialchars($customer['address']) . "</p>";
+
+        // ✅ Combine address parts into one formatted string
+        $full_address = $customer['house_number'] . ' ' .
+                        $customer['street'] . ', Brgy. ' .
+                        $customer['barangay'] . ', ' .
+                        $customer['city'] . ', ' .
+                        $customer['province'] . ', ' .
+                        $customer['region'];
+
+        echo "<p><strong>Address:</strong> " . htmlspecialchars($full_address) . "</p>";
+
         echo "<p><strong>Gender:</strong> " . htmlspecialchars($customer['gender']) . "</p>";
         echo "<p><strong>Birthday:</strong> " . htmlspecialchars($customer['birthday']) . "</p>";
 

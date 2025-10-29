@@ -1,47 +1,66 @@
 <?php
 @include('d:\xampp\htdocs\pawnshop\config.php');
 
-// Define the date range filter logic
+// Define filters
 $filter = isset($_GET['filter']) ? $_GET['filter'] : 'all';
-$filterCondition = '';
+$transaction_type = isset($_GET['transaction_type']) ? $_GET['transaction_type'] : 'all';
 
+// Build base WHERE conditions
+$conditions = [];
+
+// Date filter
 switch ($filter) {
     case 'today':
-        $filterCondition = "WHERE DATE(transactions.transaction_date) = CURDATE()";
+        $conditions[] = "DATE(transactions.transaction_date) = CURDATE()";
         break;
     case 'last_week':
-        $filterCondition = "WHERE WEEK(transactions.transaction_date) = WEEK(CURDATE()) - 1 AND YEAR(transactions.transaction_date) = YEAR(CURDATE())";
+        $conditions[] = "WEEK(transactions.transaction_date) = WEEK(CURDATE()) - 1 
+                         AND YEAR(transactions.transaction_date) = YEAR(CURDATE())";
         break;
     case 'last_month':
-        $filterCondition = "WHERE MONTH(transactions.transaction_date) = MONTH(CURDATE()) - 1 AND YEAR(transactions.transaction_date) = YEAR(CURDATE())";
+        $conditions[] = "MONTH(transactions.transaction_date) = MONTH(CURDATE()) - 1 
+                         AND YEAR(transactions.transaction_date) = YEAR(CURDATE())";
         break;
     case 'last_3_months':
-        $filterCondition = "WHERE transactions.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
+        $conditions[] = "transactions.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
         break;
     case 'last_6_months':
-        $filterCondition = "WHERE transactions.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
+        $conditions[] = "transactions.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
         break;
-    default:
-        $filterCondition = ''; // No filter
 }
 
-// Fetch transactions with handler information
-$query = "SELECT 
-            transactions.transaction_id, 
-            transactions.transaction_date, 
-            transactions.amount, 
-            transactions.payment_method, 
-            customers.first_name, 
-            customers.last_name, 
-            items.model, 
-            users.first_name AS handler_first_name, 
-            users.last_name AS handler_last_name
-          FROM transactions 
-          JOIN custumer_info AS customers ON transactions.customer_id = customers.customer_id 
-          JOIN items ON transactions.item_id = items.item_id 
-          JOIN users ON transactions.handled_by = users.user_id 
-          $filterCondition
-          ORDER BY transactions.transaction_date DESC";
+// Transaction type filter
+if ($transaction_type !== 'all') {
+    $conditions[] = "transactions.transaction_type = '" . mysqli_real_escape_string($conn, $transaction_type) . "'";
+}
+
+// Combine conditions
+$whereClause = '';
+if (!empty($conditions)) {
+    $whereClause = "WHERE " . implode(' AND ', $conditions);
+}
+
+// Fetch transactions
+$query = "
+    SELECT 
+        transactions.transaction_id, 
+        transactions.transaction_date, 
+        transactions.amount, 
+        transactions.payment_method,
+        transactions.transaction_type,
+        customers.first_name, 
+        customers.last_name, 
+        items.model, 
+        users.first_name AS handler_first_name, 
+        users.last_name AS handler_last_name
+    FROM transactions 
+    JOIN custumer_info AS customers ON transactions.customer_id = customers.customer_id 
+    JOIN items ON transactions.item_id = items.item_id 
+    JOIN users ON transactions.handled_by = users.user_id 
+    $whereClause
+    ORDER BY transactions.transaction_date DESC
+";
+
 $result = mysqli_query($conn, $query);
 
 // Calculate totals
@@ -56,30 +75,19 @@ if ($result) {
     mysqli_data_seek($result, 0);
 }
 
-// Get filter display name
-$filterDisplay = '';
-switch ($filter) {
-    case 'today':
-        $filterDisplay = 'Today';
-        break;
-    case 'last_week':
-        $filterDisplay = 'Last Week';
-        break;
-    case 'last_month':
-        $filterDisplay = 'Last Month';
-        break;
-    case 'last_3_months':
-        $filterDisplay = 'Last 3 Months';
-        break;
-    case 'last_6_months':
-        $filterDisplay = 'Last 6 Months';
-        break;
-    default:
-        $filterDisplay = 'All Time';
-}
+// Filter display name
+$filterDisplay = match ($filter) {
+    'today' => 'Today',
+    'last_week' => 'Last Week',
+    'last_month' => 'Last Month',
+    'last_3_months' => 'Last 3 Months',
+    'last_6_months' => 'Last 6 Months',
+    default => 'All Time'
+};
 
 include('header.php');
 ?>
+
 <title>Transactions - Modern Dashboard</title>
 
 <style>
@@ -282,20 +290,22 @@ include('header.php');
         text-transform: capitalize;
     }
 
-    .badge-cash {
-        background-color: #e8f5e9;
-        color: #2e7d32;
-    }
+        /* Payment Method Badges */
+        .badge-cash {
+            background-color: #e8f5e9; /* light green background */
+            color: #2e7d32;           /* dark green text */
+        }
 
-    .badge-card {
-        background-color: #e3f2fd;
-        color: #1565c0;
-    }
+        .badge-card {
+            background-color: #e3f2fd; /* light blue background */
+            color: #1565c0;           /* blue text */
+        }
 
-    .badge-online {
-        background-color: #f3e5f5;
-        color: #7b1fa2;
-    }
+        .badge-online {
+            background-color: #fff3e0; /* light orange background */
+            color: #ef6c00;           /* orange text */
+        }
+
 
     .empty-state {
         text-align: center;
@@ -332,7 +342,30 @@ include('header.php');
         .modern-table tbody td {
             padding: 0.875rem 0.5rem;
         }
+
+                /* === Transaction Type Row Highlights === */
+        .modern-table tbody tr.loan-row {
+            background-color: #e3f2fd; /* Light blue */
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .modern-table tbody tr.payment-row {
+            background-color: #e8f5e9; /* Light green */
+            border-left: 5px solid var(--success-color);
+        }
+
+        .modern-table tbody tr.loan-row:hover {
+            background-color: #bbdefb;
+        }
+
+        .modern-table tbody tr.payment-row:hover {
+            background-color: #c8e6c9;
+        }
+
+
+
     }
+    
 
     /* ========================================
        PRINT STYLES - COMPLETE OVERRIDE
@@ -507,7 +540,6 @@ include('header.php');
     }
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-
 <div class="page-header">
     <div class="container">
         <h1>Transaction Management</h1>
@@ -515,7 +547,7 @@ include('header.php');
 </div>
 
 <div class="container">
-    <!-- Statistics Cards -->
+    <!-- Stats Cards -->
     <div class="stats-container">
         <div class="stat-card">
             <div class="stat-label">Total Transactions</div>
@@ -541,6 +573,16 @@ include('header.php');
                     <option value="last_6_months" <?= $filter === 'last_6_months' ? 'selected' : '' ?>>Last 6 Months</option>
                 </select>
             </div>
+
+            <div class="flex-grow-1">
+                <label for="transaction_type">Transaction Type</label>
+                <select name="transaction_type" id="transaction_type" class="form-select">
+                    <option value="all" <?= $transaction_type === 'all' ? 'selected' : '' ?>>All Types</option>
+                    <option value="Loan" <?= $transaction_type === 'Loan' ? 'selected' : '' ?>>Loan</option>
+                    <option value="Payment" <?= $transaction_type === 'Payment' ? 'selected' : '' ?>>Payment</option>
+                </select>
+            </div>
+
             <button type="submit" class="btn-apply">Apply Filter</button>
             <button type="button" class="btn btn-success" onclick="window.print()">
                 <i class="bi bi-printer me-1"></i>Print
@@ -548,7 +590,7 @@ include('header.php');
         </form>
     </div>
 
-    <!-- Print Header (only visible when printing) -->
+    <!-- Print Header -->
     <div class="print-header">
         <h1>Transaction Report</h1>
         <div class="print-info">
@@ -561,9 +603,8 @@ include('header.php');
         </div>
     </div>
 
-    <!-- Print Container (wrapper for print layout) -->
+    <!-- Table -->
     <div class="print-container">
-        <!-- Transactions Table -->
         <div class="table-card">
             <div class="table-responsive">
                 <table class="modern-table">
@@ -575,6 +616,7 @@ include('header.php');
                             <th>Item</th>
                             <th>Date</th>
                             <th>Amount</th>
+                            <th>Type</th>
                             <th>Payment</th>
                             <th>Handler</th>
                         </tr>
@@ -583,29 +625,37 @@ include('header.php');
                         <?php
                         if ($result && mysqli_num_rows($result) > 0) {
                             $id = 1;
-                            while ($row = mysqli_fetch_assoc($result)) {
-                                $paymentMethod = strtolower($row['payment_method']);
-                                $badgeClass = 'badge-cash';
-                                if (strpos($paymentMethod, 'card') !== false) {
-                                    $badgeClass = 'badge-card';
-                                } elseif (strpos($paymentMethod, 'online') !== false || strpos($paymentMethod, 'digital') !== false) {
-                                    $badgeClass = 'badge-online';
-                                }
-                                
-                                echo "<tr>
-                                    <td>" . $id . "</td>
-                                    <td><span class='transaction-id'>#" . str_pad($id, 4, '0', STR_PAD_LEFT) . "</span></td>
-                                    <td>" . htmlspecialchars($row['first_name'] . ' ' . $row['last_name']) . "</td>
-                                    <td>" . htmlspecialchars($row['model']) . "</td>
-                                    <td>" . date('M d, Y', strtotime($row['transaction_date'])) . "</td>
-                                    <td><span class='amount'>₱" . number_format($row['amount'], 2) . "</span></td>
-                                    <td><span class='badge $badgeClass'>" . htmlspecialchars($row['payment_method']) . "</span></td>
-                                    <td>" . htmlspecialchars($row['handler_first_name'] . ' ' . $row['handler_last_name']) . "</td>
-                                </tr>";
+                            while ($row = $result->fetch_assoc()) {
+                                $idDisplay = $id;
+                                $transactionId = str_pad($row['transaction_id'], 4, '0', STR_PAD_LEFT);
+                                $customerName = htmlspecialchars($row['first_name'] . ' ' . $row['last_name']);
+                                $itemModel = htmlspecialchars($row['model']);
+                                $transactionDate = date('M d, Y', strtotime($row['transaction_date']));
+                                $amount = number_format($row['amount'], 2);
+                                $paymentMethod = htmlspecialchars($row['payment_method']);
+                                $handlerName = htmlspecialchars($row['handler_first_name'] . ' ' . $row['handler_last_name']);
+                                $badgeClass = ($row['transaction_type'] === 'Loan') ? 'badge-card' : 'badge-cash';
+                                $transactionType = htmlspecialchars($row['transaction_type']);
+
+                                echo "
+                                    <tr>
+                                        <td>{$idDisplay}</td>
+                                        <td><span class='transaction-id'>#{$transactionId}</span></td>
+                                        <td>{$customerName}</td>
+                                        <td>{$itemModel}</td>
+                                        <td>{$transactionDate}</td>
+                                        <td><span class='amount'>₱{$amount}</span></td>
+                                        <td><span class='badge {$badgeClass}'>{$transactionType}</span></td>
+                                        <td><span class='badge badge-online'>{$paymentMethod}</span></td>
+                                        <td>{$handlerName}</td>
+                                    </tr>
+                                ";
+
                                 $id++;
                             }
+
                         } else {
-                            echo "<tr><td colspan='8'>
+                            echo "<tr><td colspan='9'>
                                 <div class='empty-state'>
                                     <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
                                         <circle cx='12' cy='12' r='10'></circle>
@@ -613,7 +663,7 @@ include('header.php');
                                         <line x1='12' y1='16' x2='12.01' y2='16'></line>
                                     </svg>
                                     <h3>No Transactions Found</h3>
-                                    <p>Try adjusting your filter to see more results</p>
+                                    <p>Try adjusting your filters</p>
                                 </div>
                             </td></tr>";
                         }
@@ -625,11 +675,13 @@ include('header.php');
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Auto-submit filter script -->
 <script>
-    // Add smooth scroll behavior
-    document.documentElement.style.scrollBehavior = 'smooth';
+document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll('#filter, #transaction_type').forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+});
 </script>
-</body>
-</html>
-<?php include('footer.php') ?>

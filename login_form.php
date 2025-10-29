@@ -1,45 +1,57 @@
 <?php
 @include 'config.php';
-
 session_start();
 
 if (isset($_POST['submit'])) {
-    // Get the email and password from POST data
     $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $password = md5($_POST['password']); // Hash the entered password using md5()
+    $password = $_POST['password']; // user input password
 
-    // Validate email to ensure it's a Gmail address
+    // Validate Gmail format
     if (!preg_match('/^[a-zA-Z0-9._%+-]+@gmail\.com$/', $email)) {
         $error[] = 'Only Gmail addresses are allowed.';
     } else {
-        // Prepare a statement to prevent SQL injection
-        $query = $conn->prepare("SELECT * FROM users WHERE email = ? AND password = ?");
-        $query->bind_param("ss", $email, $password); // Bind both email and password
+        // Check if user exists
+        $query = $conn->prepare("SELECT * FROM users WHERE email = ?");
+        $query->bind_param("s", $email);
         $query->execute();
         $result = $query->get_result();
 
         if ($result->num_rows > 0) {
             $row = $result->fetch_assoc();
 
-            // Store session data dynamically
-            $_SESSION['user_id'] = $row['user_id'];
-            $_SESSION['user_name'] = $row['first_name'];
-            $_SESSION['user_type'] = $row['user_type'];
+            // Verify password (supports both new and legacy md5)
+            if (password_verify($password, $row['password']) || md5($password) === $row['password']) {
 
-            // Redirect based on user type
-            if ($row['user_type'] == 'admin') {
-                header('location:Home.php');
-            } elseif ($row['user_type'] == 'employee') {
-                header('location:home_employee.php');
+                // 🧩 NEW: Check account status before login
+                if (isset($row['status']) && strtolower($row['status']) === 'inactive') {
+                    $error[] = 'Your account is currently inactive. Please contact the admin.';
+                } else {
+                    // ✅ Successful login
+                    $_SESSION['user_id'] = $row['user_id'];
+                    $_SESSION['user_name'] = $row['first_name'];
+                    $_SESSION['user_type'] = $row['user_type'];
+
+                    // Redirect based on user type
+                    if ($row['user_type'] == 'admin') {
+                        header('Location: Home.php');
+                    } elseif ($row['user_type'] == 'employee') {
+                        header('Location: home_employee.php');
+                    } else {
+                        header('Location: dashboard.php');
+                    }
+                    exit();
+                }
             } else {
-                header('location:dashboard.php'); // Redirect to a general dashboard if needed
+                $error[] = 'Incorrect password!';
             }
         } else {
-            $error[] = 'Incorrect email or password!';
+            $error[] = 'Email not found!';
         }
     }
 }
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">

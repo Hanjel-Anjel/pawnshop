@@ -2,8 +2,8 @@
 @include 'config.php';
 session_start();
 
-// Ensure admin/staff or customer is logged in
-if (!isset($_SESSION['user_id'])) {
+// Ensure user is logged in
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_type'])) {
     header("Location: login.php");
     exit();
 }
@@ -49,17 +49,15 @@ if (isset($_POST['submit_payment'])) {
     $update->bind_param("di", $remaining_balance, $item_id);
     $update->execute();
 
-    // Optional: Update item status if fully paid
+    // Update item status if fully paid
     if ($remaining_balance == 0) {
         $conn->query("UPDATE items SET item_status = 'Fully Paid' WHERE item_id = $item_id");
     }
 
-    // ✅ Insert into transactions table for Payment
+    // Insert into transactions table for Payment
     $transaction_date = date("Y-m-d");
     $transaction_type = 'Payment';
     $customer_id = $item['customer_id'];
-    $amount = $amount_paid; // the amount paid by customer
-    $total_amount = $remaining_balance + $amount_paid; // optional tracking
 
     $insert_transaction = $conn->prepare("
         INSERT INTO transactions 
@@ -67,8 +65,10 @@ if (isset($_POST['submit_payment'])) {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
-        $insert_transaction->bind_param(
-        "iissdsss", // ✅  payment_method is now a string (s)
+    $total_amount = $remaining_balance + $amount_paid;
+
+    $insert_transaction->bind_param(
+        "iissdsss",
         $customer_id,
         $item_id,
         $transaction_date,
@@ -79,17 +79,20 @@ if (isset($_POST['submit_payment'])) {
         $transaction_type
     );
 
-
     $insert_transaction->execute();
 
-
-        // Redirect with success
-        $_SESSION['payment_success'] = true;
+    // Redirect based on user type
+    if ($_SESSION['user_type'] === 'admin') {
+        header("Location: item_table.php");
+    } else if ($_SESSION['user_type'] === 'employee') {
         header("Location: inventory_employee.php");
-        exit();
+    } else {
+        header("Location: login.php"); // fallback
     }
-
+    exit();
+}
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -130,7 +133,11 @@ if (isset($_POST['submit_payment'])) {
             <button type="submit" name="submit_payment" class="btn btn-success w-100">Submit Payment</button>
         </form>
 
-        <a href="inventory_employee.php" class="btn btn-secondary mt-3 w-100">Back to Items</a>
+        <?php
+        $back_page = ($_SESSION['user_type'] === 'admin') ? 'item_table.php' : 'inventory_employee.php';
+        ?>
+        <a href="<?= $back_page ?>" class="btn btn-secondary mt-3 w-100">Back to Items</a>
+
     </div>
 </div>
 </body>

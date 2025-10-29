@@ -44,7 +44,11 @@ if (!isset($_SESSION['admin_name']) && !isset($_SESSION['user_name'])) {
     <header class="header">
         <button class="toggle-btn" id="toggle-btn"><i class="fas fa-bars"></i></button>
         <h1>ArMaTech Pa-wnshop Management System</h1>
-        <span>Employee, <?php echo htmlspecialchars($_SESSION['admin_name'] ?? $_SESSION['user_name']); ?></span>
+        <!-- Profile Button -->
+<a href="employee_profile.php" class="btn btn-outline-dark fw-semibold">
+    <i class="fas fa-user-circle me-2"></i>
+    <?php echo htmlspecialchars($_SESSION['admin_name'] ?? $_SESSION['user_name']); ?>
+</a>
     </header>
 
     <!-- Sidebar -->
