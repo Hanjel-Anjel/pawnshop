@@ -2,18 +2,23 @@
 @include 'config.php';
 include('header_employee.php');
 
+// Get session values from header_employee.php
 $current_user_id = $_SESSION['user_id'];
 $current_user_name = $_SESSION['first_name'] ?? '';
 
+// Default filters
+$date_filter = $_GET['date_filter'] ?? 'all';
+$transaction_type = $_GET['transaction_type'] ?? 'all';
+
 // Fetch transactions handled by the current user
-function fetchTransactions($conn, $userId, $dateFilter = 'all') {
-     $query = "
+function fetchTransactions($conn, $current_user_id, $dateFilter = 'all', $transactionType = 'all') {
+    $query = "
         SELECT 
             t.transaction_id, 
-            t.transaction_type,
             t.transaction_date, 
             t.amount, 
             t.payment_method, 
+            t.transaction_type,
             c.first_name AS customer_first_name, 
             c.last_name AS customer_last_name, 
             i.model AS item_model, 
@@ -26,6 +31,7 @@ function fetchTransactions($conn, $userId, $dateFilter = 'all') {
         WHERE t.handled_by = ?
     ";
 
+    // Date filter
     switch ($dateFilter) {
         case 'today':
             $query .= " AND DATE(t.transaction_date) = CURDATE()";
@@ -39,20 +45,34 @@ function fetchTransactions($conn, $userId, $dateFilter = 'all') {
         case '3months':
             $query .= " AND t.transaction_date >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
             break;
-        case 'all':
         default:
             break;
     }
 
+    // Transaction type filter
+    if ($transactionType !== 'all') {
+        $query .= " AND t.transaction_type = ?";
+    }
+
     $query .= " ORDER BY t.transaction_date DESC";
 
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param('i', $userId);
+    // Correct variable binding
+    if ($transactionType !== 'all') {
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param('is', $current_user_id, $transactionType);
+    } else {
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param('i', $current_user_id);
+    }
+
     $stmt->execute();
     return $stmt->get_result();
 }
 
-// Calculate transaction statistics
+// Fetch data properly (include transaction_type)
+$result = fetchTransactions($conn, $current_user_id, $date_filter, $transaction_type);
+
+// Stats
 function getTransactionStats($conn, $userId, $dateFilter = 'all') {
     $query = "
         SELECT 
@@ -84,10 +104,10 @@ function getTransactionStats($conn, $userId, $dateFilter = 'all') {
     return $stmt->get_result()->fetch_assoc();
 }
 
-$date_filter = $_GET['date_filter'] ?? 'all';
-$transactions = fetchTransactions($conn, $current_user_id, $date_filter);
 $stats = getTransactionStats($conn, $current_user_id, $date_filter);
+$transactions = $result;
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -639,6 +659,18 @@ $stats = getTransactionStats($conn, $current_user_id, $date_filter);
                     <option value="3months" <?php echo ($date_filter === '3months') ? 'selected' : ''; ?>>Last 3 Months</option>
                 </select>
             </div>
+
+            <!-- Transaction Type Filter -->
+            <div class="flex-fill">
+                <label for="transaction_type" class="form-label">Transaction Type</label>
+                <select name="transaction_type" id="transaction_type" class="form-select">
+                    <option value="all" <?php echo ($transaction_type === 'all') ? 'selected' : ''; ?>>All Types</option>
+                    <option value="Loan" <?php echo ($transaction_type === 'Loan') ? 'selected' : ''; ?>>Loan</option>
+                    <option value="Payment" <?php echo ($transaction_type === 'Payment') ? 'selected' : ''; ?>>Payment</option>
+                </select>
+            </div>
+
+
             <button type="submit" class="btn btn-primary">
                 <i class="bi bi-search me-1"></i>Apply Filter
             </button>
@@ -730,7 +762,14 @@ $stats = getTransactionStats($conn, $current_user_id, $date_filter);
     </div>
 </div>
 
-<script src="path-to-bootstrap.js"></script>
+    <script 
+        src="path-to-bootstrap.js">
+
+        document.querySelectorAll('#date_filter, #transaction_type').forEach(select => {
+            select.addEventListener('change', () => select.form.submit());
+        });
+
+    </script>
 <?php include('footer.php'); ?>
 </body>
 </html>

@@ -217,6 +217,11 @@ include('header_employee.php');
         color: #2e7d32;
     }
 
+    .status-fully-paid {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+
     .status-on-sale {
         background-color: #fff3e0;
         color: #e65100;
@@ -525,6 +530,7 @@ include('header_employee.php');
                     <select name="item_status" id="item_status" class="form-control">
                         <option value="">All Statuses</option>
                         <option value="Pawned" <?= isset($_GET['item_status']) && $_GET['item_status'] == 'Pawned' ? 'selected' : '' ?>>Pawned</option>
+                        <option value="Fully Paid" <?= isset($_GET['item_status']) && $_GET['item_status'] == 'Fully Paid' ? 'selected' : '' ?>>Fully Paid</option>
                         <option value="Redeemed" <?= isset($_GET['item_status']) && $_GET['item_status'] == 'Redeemed' ? 'selected' : '' ?>>Redeemed</option>
                         <option value="On Sale" <?= isset($_GET['item_status']) && $_GET['item_status'] == 'On Sale' ? 'selected' : '' ?>>On Sale</option>
                         <option value="Forfeited" <?= isset($_GET['item_status']) && $_GET['item_status'] == 'Forfeited' ? 'selected' : '' ?>>Forfeited</option>
@@ -625,9 +631,20 @@ include('header_employee.php');
                             echo "<td><strong>₱" . number_format($row['total_balance'], 2) . "</strong></td>";
                             echo "<td>" . date('M d, Y', strtotime($row['pawn_date'])) . "</td>";
                             echo "<td>" . date('M d, Y', strtotime($row['due_date'])) . "</td>";
+                          
+                              
                             echo "<td><div class='action-buttons'>";
-                            echo "<button class='btn btn-primary btn-sm view-item' data-item-id='" . $row['item_id'] . "'><i class='bi bi-eye me-1'></i>View</button>";
-                            echo "<a href='payment.php?item_id=" . $row['item_id'] . "' class='btn btn-success btn-sm'> <i class='bi bi-cash-coin me-1'></i>Pay</a>";
+                            echo "<button class='btn btn-primary btn-sm view-item' data-item-id='" . $row['item_id'] . "'>
+                                    <i class='bi bi-eye me-1'></i>View
+                                </button>";
+
+                            //  Only show the Pay button if item is NOT Fully Paid
+                            if (strtolower(trim($row['item_status'])) !== 'fully paid') {
+                                echo "<a href='payment.php?item_id=" . $row['item_id'] . "' class='btn btn-success btn-sm'>
+                                        <i class='bi bi-cash-coin me-1'></i>Pay
+                                    </a>";
+                            }
+
                             echo "</div></td>";
                             echo "</tr>";
                         }
