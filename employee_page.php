@@ -3,69 +3,43 @@ include('d:\xampp\htdocs\pawnshop\config.php');
 ob_start();
 include('header.php');
 
-// ✅ Handle Add Employee
+// Handle Add Employee
 if (isset($_POST['add_employee'])) {
-    $first = mysqli_real_escape_string($conn, $_POST['first_name']);
-    $last = mysqli_real_escape_string($conn, $_POST['last_name']);
-    $mi = mysqli_real_escape_string($conn, $_POST['middle_initial']);
-    $position = mysqli_real_escape_string($conn, $_POST['position']);
+    $first = $_POST['first_name'];
+    $last = $_POST['last_name'];
+    $mi = $_POST['middle_initial'];
+    $position = $_POST['position'];
     $salary = $_POST['salary'];
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $password = $_POST['password'];
-    $cpassword = $_POST['cpassword'];
-    $contact_number = mysqli_real_escape_string($conn, $_POST['contact_number']);
-    $address = mysqli_real_escape_string($conn, str_replace(array("\r", "\n"), ' ', $_POST['address']));
-    $date_hired = mysqli_real_escape_string($conn, $_POST['date_hired']);
-    $user_type = 'employee';
+    $email = $_POST['email'];
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $contact = $_POST['contact_number'];
+    $address = str_replace(array("\r", "\n"), ' ', $_POST['address']);
+    $date_hired = $_POST['date_hired'];
 
-    if ($password !== $cpassword) {
-        echo "<script>alert('Passwords do not match!');</script>";
-    } else {
-        $check = $conn->prepare("SELECT * FROM users WHERE email=?");
-        $check->bind_param("s", $email);
-        $check->execute();
-        $res = $check->get_result();
-        if ($res->num_rows > 0) {
-            echo "<script>alert('Email already exists!');</script>";
-        } else {
-            $hashed_pass = password_hash($password, PASSWORD_DEFAULT);
-
-            // Insert to users
-            $stmt1 = $conn->prepare("INSERT INTO users (first_name, middle_initial, last_name, email, password, user_type, status) VALUES (?, ?, ?, ?, ?, ?, 'Active')");
-            $stmt1->bind_param("ssssss", $first, $mi, $last, $email, $hashed_pass, $user_type);
-            $stmt1->execute();
-            $user_id = $conn->insert_id;
-
-            // Insert to employee_details
-            $stmt2 = $conn->prepare("INSERT INTO employee_details (user_id, first_name, last_name, middle_initial, position, salary, date_hired, contact_number, address, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active')");
-            $stmt2->bind_param("issssdsss", $user_id, $first, $last, $mi, $position, $salary, $date_hired, $contact_number, $address);
-            $stmt2->execute();
-
-            header("Location: employee_page.php");
-            exit();
-        }
-    }
-}
-
-// ✅ Handle Activate/Deactivate
-if (isset($_GET['toggle_id']) && isset($_GET['action'])) {
-    $user_id = $_GET['toggle_id'];
-    $action = $_GET['action'];
-    $new_status = ($action === 'deactivate') ? 'Inactive' : 'Active';
-
-    $stmt = $conn->prepare("UPDATE users SET status=? WHERE user_id=?");
-    $stmt->bind_param("si", $new_status, $user_id);
+    $stmt = $conn->prepare("CALL AddNewEmployee(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssdsdsss", $first, $mi, $last, $position, $salary, $email, $password, $contact, $address, $date_hired);
     $stmt->execute();
-
-    $stmt2 = $conn->prepare("UPDATE employee_details SET status=? WHERE user_id=?");
-    $stmt2->bind_param("si", $new_status, $user_id);
-    $stmt2->execute();
 
     header("Location: employee_page.php");
     exit();
 }
 
-// ✅ Handle Update Employee
+
+// Handle Activate/Deactivate
+if (isset($_GET['toggle_id']) && isset($_GET['action'])) {
+    $user_id = $_GET['toggle_id'];
+    $action = $_GET['action'];
+
+    $stmt = $conn->prepare("CALL ToggleEmployeeStatus(?, ?)");
+    $stmt->bind_param("is", $user_id, $action);
+    $stmt->execute();
+
+    header("Location: employee_page.php");
+    exit();
+}
+
+
+// Handle Update Employee
 if (isset($_POST['update_employee'])) {
     $emp_id = $_POST['emp_id'];
     $user_id = $_POST['user_id'];
@@ -79,30 +53,34 @@ if (isset($_POST['update_employee'])) {
     $address = $_POST['address'];
     $date_hired = $_POST['date_hired'];
 
-    // Update employee_details
-    $stmt1 = $conn->prepare("UPDATE employee_details SET first_name=?, last_name=?, middle_initial=?, position=?, salary=?, date_hired=?, contact_number=?, address=? WHERE id=?");
-    $stmt1->bind_param("ssssdsssi", $first, $last, $mi, $position, $salary, $date_hired, $contact_number, $address, $emp_id);
-    $stmt1->execute();
+    $sql = "CALL UpdateEmployee(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param(
+        "iissssdssss",
+        $emp_id,
+        $user_id,
+        $first,
+        $last,
+        $mi,
+        $position,
+        $salary,
+        $email,
+        $contact_number,
+        $address,
+        $date_hired
+    );
 
-    // Update users
-    $stmt2 = $conn->prepare("UPDATE users SET first_name=?, middle_initial=?, last_name=?, email=? WHERE user_id=?");
-    $stmt2->bind_param("ssssi", $first, $mi, $last, $email, $user_id);
-    $stmt2->execute();
+    $stmt->execute();
 
     header("Location: employee_page.php");
     exit();
 }
 
-// ✅ Fetch Employees
-$sql = "
-SELECT 
-    e.id, e.user_id, e.last_name, e.first_name, e.middle_initial, 
-    e.position, e.salary, e.date_hired, e.contact_number, e.address, e.status AS employee_status,
-    u.email, u.user_type, u.status AS account_status
-FROM employee_details e
-JOIN users u ON e.user_id = u.user_id
-ORDER BY e.id ASC";
-$result = $conn->query($sql);
+
+// Fetch Employees 
+// view statement for employee directory
+$result = $conn->query("SELECT * FROM view_employee_directory");
+
 ?>
 
 
@@ -585,7 +563,7 @@ $result = $conn->query($sql);
                                     "'>" . ($row['account_status'] === 'Active' ? '<i class="bi bi-check-circle me-1"></i>' : '<i class="bi bi-x-circle me-1"></i>') . "{$row['account_status']}</span>
                                 </td>
                                 <td>
-                                    <button class='btn btn-update btn-action btn-sm update-btn'
+                                  <button class='btn btn-update btn-action btn-sm update-btn'
                                         data-id='{$row['id']}'
                                         data-user_id='{$row['user_id']}'
                                         data-first='{$row['first_name']}'
@@ -594,7 +572,14 @@ $result = $conn->query($sql);
                                         data-position='{$row['position']}'
                                         data-salary='{$row['salary']}'
                                         data-email='{$row['email']}'
-                                        data-bs-toggle='modal' data-bs-target='#updateEmployeeModal'><i class='bi bi-pencil-square'></i> Update</button>";
+                                        data-contact_number='{$row['contact_number']}'
+                                        data-address=\"" . htmlspecialchars($row['address'], ENT_QUOTES) . "\"
+                                        data-date_hired='{$row['date_hired']}'
+                                        data-bs-toggle='modal' data-bs-target='#updateEmployeeModal'>
+                                        <i class='bi bi-pencil-square'></i> Update
+                                    </button>";
+
+
 
                             if ($row['account_status'] === 'Active') {
                                 echo " <a href='?toggle_id={$row['user_id']}&action=deactivate' class='btn btn-deactivate btn-action btn-sm' onclick=\"return confirm('Are you sure you want to deactivate this employee?');\"><i class='bi bi-toggle-off'></i> Deactivate</a>";
@@ -615,7 +600,7 @@ $result = $conn->query($sql);
         </div>
     </div>
 
-   <!-- ✅ Add Employee Modal -->
+   <!-- Add Employee Modal -->
 <div class="modal fade" id="addEmployeeModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
@@ -705,7 +690,7 @@ $result = $conn->query($sql);
   </div>
 </div>
 
-<!-- ✅ Update Employee Modal -->
+<!-- Update Employee Modal -->
 <div class="modal fade" id="updateEmployeeModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
@@ -781,18 +766,22 @@ $result = $conn->query($sql);
 
 
     <script>
-    document.querySelectorAll('.update-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        document.getElementById('update_emp_id').value = this.dataset.id;
-        document.getElementById('update_user_id').value = this.dataset.user_id;
-        document.getElementById('update_first_name').value = this.dataset.first;
-        document.getElementById('update_last_name').value = this.dataset.last;
-        document.getElementById('update_middle_initial').value = this.dataset.mi;
-        document.getElementById('update_position').value = this.dataset.position;
-        document.getElementById('update_salary').value = this.dataset.salary;
-        document.getElementById('update_email').value = this.dataset.email;
+        document.querySelectorAll('.update-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('update_emp_id').value = this.dataset.id;
+            document.getElementById('update_user_id').value = this.dataset.user_id;
+            document.getElementById('update_first_name').value = this.dataset.first;
+            document.getElementById('update_last_name').value = this.dataset.last;
+            document.getElementById('update_middle_initial').value = this.dataset.mi;
+            document.getElementById('update_position').value = this.dataset.position;
+            document.getElementById('update_salary').value = this.dataset.salary;
+            document.getElementById('update_email').value = this.dataset.email;
+            document.getElementById('update_contact_number').value = this.dataset.contact_number || '';
+            document.getElementById('update_address').value = this.dataset.address || '';
+            document.getElementById('update_date_hired').value = this.dataset.date_hired || '';
+        });
     });
-    });
+
 
     function togglePasswordVisibility(fieldId, iconElement) {
         const field = document.getElementById(fieldId);
