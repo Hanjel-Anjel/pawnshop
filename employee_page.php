@@ -105,7 +105,7 @@ $result = $conn->query("SELECT * FROM view_employee_directory");
     }
 
     body {
-        background-color: var(--background-color);
+        background: linear-gradient(135deg, #00416a 0%, #1c92d2 100%);
     }
 
     .page-header {

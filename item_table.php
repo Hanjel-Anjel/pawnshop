@@ -116,7 +116,7 @@ include('header.php');
 }
 
 body {
-    background: #fafafa;
+    background: linear-gradient(135deg, #00416a 0%, #1c92d2 100%);
     min-height: 100vh;
 }
 
@@ -127,14 +127,16 @@ body {
 
 /* Page Header */
 .page-header {
-    background: #ffc107;
-    padding: 24px 0;
-    margin-bottom: 24px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+    color: #ffffff;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .page-header h2 {
-    color: rgba(0, 0, 0, 0.87);
+    color: #ffffff;
     font-weight: 500;
     margin: 0;
     display: flex;

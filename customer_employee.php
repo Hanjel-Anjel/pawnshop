@@ -102,7 +102,7 @@ $stmt->bind_param(
 
     body {
         font-family: 'Roboto', sans-serif;
-        background: var(--md-background);
+       background: linear-gradient(135deg, #00416a 0%, #1c92d2 100%);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
     }

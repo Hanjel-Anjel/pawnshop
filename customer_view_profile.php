@@ -579,9 +579,7 @@
             <div class="profile-header">
                 <div class="profile-avatar-wrapper">
                     <img src="display_image.php?user_id=<?php echo $user_id; ?>" alt="Profile Picture" class="profile-pic">
-                    <div class="avatar-badge">
-                        <i class="bi bi-person-check-fill"></i>
-                    </div>
+                   
                 </div>
                 <h2 class="profile-name"><?php echo htmlspecialchars($profile['first_name'] . ' ' . $profile['last_name']); ?></h2>
                 <p class="profile-phone">

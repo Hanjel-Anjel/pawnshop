@@ -135,7 +135,7 @@ $transactions = $result;
         }
 
         body {
-            background-color: var(--background);
+            background: linear-gradient(135deg, #00416a 0%, #1c92d2 100%);
             font-family: 'Roboto', 'Segoe UI', sans-serif;
         }
 

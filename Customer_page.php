@@ -196,7 +196,7 @@ include('header.php');
 }
 
 body {
-    background: linear-gradient(135deg, #f5f7fa 0%, #f5f7fa 100%);
+    background: linear-gradient(135deg, #00416a 0%, #1c92d2 100%);
     min-height: 100vh;
     padding-bottom: 3rem;
 }
