@@ -106,6 +106,70 @@ if (isset($_POST['confirm_delete'])) {
     $stmt->close();
 }
 
+    // Pagination setup
+   $search = $_GET['search'] ?? '';
+$status_filter = $_GET['status_filter'] ?? '';
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+$limit = 10;
+$offset = ($page - 1) * $limit;
+
+// -------------------- COUNT TOTAL RECORDS --------------------
+$count_sql = "SELECT COUNT(*) AS total FROM custumer_info WHERE 1";
+$count_params = [];
+$count_types = "";
+
+if (!empty($search)) {
+    $count_sql .= " AND (first_name LIKE ? OR last_name LIKE ?)";
+    $count_params[] = "%$search%";
+    $count_params[] = "%$search%";
+    $count_types .= "ss";
+}
+if (!empty($status_filter)) {
+    $count_sql .= " AND status = ?";
+    $count_params[] = $status_filter;
+    $count_types .= "s";
+}
+
+$count_stmt = $conn->prepare($count_sql);
+if (!empty($count_params)) {
+    $count_stmt->bind_param($count_types, ...$count_params);
+}
+$count_stmt->execute();
+$count_result = $count_stmt->get_result();
+$total_records = $count_result->fetch_assoc()['total'];
+$total_pages = ceil($total_records / $limit);
+
+// -------------------- FETCH CUSTOMERS --------------------
+$sql = "SELECT * FROM custumer_info WHERE 1";
+$params = [];
+$types = "";
+
+if (!empty($search)) {
+    $sql .= " AND (first_name LIKE ? OR last_name LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+    $types .= "ss";
+}
+if (!empty($status_filter)) {
+    $sql .= " AND status = ?";
+    $params[] = $status_filter;
+    $types .= "s";
+}
+
+$sql .= " ORDER BY customer_id DESC LIMIT ? OFFSET ?";
+$params[] = $limit;
+$params[] = $offset;
+$types .= "ii";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$result = $stmt->get_result();
+
+
+
+
 include('header.php');
 ?>
 
@@ -890,7 +954,7 @@ body {
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <label class="search-label">
                     <i class="bi bi-funnel"></i>
                     Status Filter
@@ -902,113 +966,108 @@ body {
                 </select>
             </div>
 
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <label class="search-label" style="visibility: hidden;">Action</label>
                 <button type="submit" class="btn btn-primary w-100">
                     <i class="bi bi-funnel-fill"></i>Filter
                 </button>
             </div>
 
-            <div class="col-md-2">
+          <!--  <div class="col-md-2">
                 <label class="search-label" style="visibility: hidden;">Action</label>
                 <button type="button" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
                     <i class="bi bi-plus-circle"></i>Add New
                 </button>
-            </div>
+            </div> -->
         </form>
     </div>
 
-    <!-- Customer Table -->
-    <div class="table-card">
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
-                <thead>
-                    <tr class="text-center">
-                        <th>ID</th>
-                        <th>Last Name</th>
-                        <th>First Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $search = $_GET['search'] ?? '';
-                    $status_filter = $_GET['status_filter'] ?? '';
-                    $sql = "SELECT * FROM custumer_info WHERE 1";
-
-                    if (!empty($search)) {
-                        $sql .= " AND (first_name LIKE ? OR last_name LIKE ?)";
-                    }
-                    if (!empty($status_filter)) {
-                        $sql .= " AND status = ?";
-                    }
-
-                    $stmt = $conn->prepare($sql);
-                    if (!empty($search) && !empty($status_filter)) {
-                        $search_term = "%$search%";
-                        $stmt->bind_param("sss", $search_term, $search_term, $status_filter);
-                    } elseif (!empty($search)) {
-                        $search_term = "%$search%";
-                        $stmt->bind_param("ss", $search_term, $search_term);
-                    } elseif (!empty($status_filter)) {
-                        $stmt->bind_param("s", $status_filter);
-                    }
-
-                    $stmt->execute();
-                    $result = $stmt->get_result();
-
-                    if ($result->num_rows > 0) {
-                        while ($row = $result->fetch_assoc()) { ?>
-                            <tr class="text-center">
-                                <td><strong><?= $row['customer_id']; ?></strong></td>
-                                <td><?= htmlspecialchars($row['last_name']); ?></td>
-                                <td><?= htmlspecialchars($row['first_name']); ?></td>
-                                <td><i class="bi bi-envelope me-1 text-primary"></i><?= htmlspecialchars($row['email']); ?></td>
-                                <td><i class="bi bi-telephone me-1 text-success"></i><?= htmlspecialchars($row['phone_no']); ?></td>
-                                <td>
-                                    <span class="badge <?= $row['status'] === 'Active' ? 'bg-success' : 'bg-secondary'; ?>">
-                                        <i class="bi <?= $row['status'] === 'Active' ? 'bi-check-circle' : 'bi-x-circle'; ?> me-1"></i>
-                                        <?= htmlspecialchars($row['status']); ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <button class="btn btn-primary btn-sm view-btn" 
-                                                data-id="<?= $row['customer_id']; ?>" 
-                                                data-bs-toggle="modal" data-bs-target="#viewCustomerModal">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="btn btn-warning btn-sm"
-                                                data-id="<?= $row['customer_id']; ?>"
-                                                data-bs-toggle="modal" data-bs-target="#updateCustomerModal">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="btn btn-danger btn-sm"
-                                                onclick="confirmDelete(<?= $row['customer_id']; ?>)">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                    <?php } 
-                    } else { ?>
-                        <tr>
-                            <td colspan="7">
-                                <div class="empty-state">
-                                    <i class="bi bi-inbox"></i>
-                                    <p>No customers found</p>
+   <!-- Customer Table -->
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr class="text-center">
+                    <th>ID</th>
+                    <th>Last Name</th>
+                    <th>First Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if ($result->num_rows > 0): ?>
+                    <?php while ($row = $result->fetch_assoc()): ?>
+                        <tr class="text-center">
+                            <td><strong><?= $row['customer_id']; ?></strong></td>
+                            <td><?= htmlspecialchars($row['last_name']); ?></td>
+                            <td><?= htmlspecialchars($row['first_name']); ?></td>
+                            <td><i class="bi bi-envelope me-1 text-primary"></i><?= htmlspecialchars($row['email']); ?></td>
+                            <td><i class="bi bi-telephone me-1 text-success"></i><?= htmlspecialchars($row['phone_no']); ?></td>
+                            <td>
+                                <span class="badge <?= $row['status'] === 'Active' ? 'bg-success' : 'bg-secondary'; ?>">
+                                    <i class="bi <?= $row['status'] === 'Active' ? 'bi-check-circle' : 'bi-x-circle'; ?> me-1"></i>
+                                    <?= htmlspecialchars($row['status']); ?>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-primary btn-sm view-btn" 
+                                            data-id="<?= $row['customer_id']; ?>" 
+                                            data-bs-toggle="modal" data-bs-target="#viewCustomerModal">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn btn-warning btn-sm"
+                                            data-id="<?= $row['customer_id']; ?>"
+                                            data-bs-toggle="modal" data-bs-target="#updateCustomerModal">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
-                    <?php } ?>
-                </tbody>
-            </table>
-        </div>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <p>No customers found</p>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
-</section>
+</div>
+
+<!-- Pagination -->
+<?php if ($total_pages > 1): ?>
+<nav aria-label="Customer pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <!-- Previous -->
+        <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+            <a class="page-link" href="?search=<?= urlencode($search) ?>&status_filter=<?= urlencode($status_filter) ?>&page=<?= $page - 1 ?>">Previous</a>
+        </li>
+
+        <!-- Page Numbers -->
+        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+            <li class="page-item <?= $page == $i ? 'active' : '' ?>">
+                <a class="page-link" href="?search=<?= urlencode($search) ?>&status_filter=<?= urlencode($status_filter) ?>&page=<?= $i ?>">
+                    <?= $i ?>
+                </a>
+            </li>
+        <?php endfor; ?>
+
+        <!-- Next -->
+        <li class="page-item <?= $page >= $total_pages ? 'disabled' : '' ?>">
+            <a class="page-link" href="?search=<?= urlencode($search) ?>&status_filter=<?= urlencode($status_filter) ?>&page=<?= $page + 1 ?>">Next</a>
+        </li>
+    </ul>
+</nav>
+<?php endif; ?>
 
 <!-- View Customer Modal -->
 <div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">

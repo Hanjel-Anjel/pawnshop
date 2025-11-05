@@ -688,10 +688,10 @@ input[type=text], textarea {
                                       data-due-date='" . htmlspecialchars($row['due_date']) . "'
                                       data-expiry-date='" . htmlspecialchars($row['expiry_date']) . "'
                                       data-bs-toggle='modal' data-bs-target='#viewItemModal'>
-                                      <i class='bi bi-eye'></i>
+                                      <i class='bi bi-eye'></i> view
                                       </button>";
                                       
-                                echo "<button type='button' class='btn btn-warning btn-sm m-1 edit-item-btn' 
+                               /* echo "<button type='button' class='btn btn-warning btn-sm m-1 edit-item-btn' 
                                       data-item-id='" . $row['item_id'] . "'
                                       data-item-brand='" . htmlspecialchars($row['brand']) . "'
                                       data-item-model='" . htmlspecialchars($row['model']) . "'
@@ -699,9 +699,9 @@ input[type=text], textarea {
                                       data-item-condition='" . htmlspecialchars($row['condition']) . "'
                                       data-item-value='" . htmlspecialchars($row['item_value']) . "'
                                       data-item-status='" . htmlspecialchars($row['item_status']) . "'
-                                      data-bs-toggle='modal' data-bs-target='#editItemModal'>
+                                      data-bs-toggle='modal' data-bs-target='#editItemModal'> 
                                       <i class='bi bi-pencil'></i>
-                                      </button>";
+                                      </button>"; */
                                       
                                             if($row['item_status'] === 'Pawned') {
                                                 echo "<a href='payment.php?item_id=" . $row['item_id'] . "' 

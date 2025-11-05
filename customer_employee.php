@@ -11,7 +11,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_customer'])) {
     $birthday = $_POST['birthday'];
     $email = $_POST['email'];
     $phone_no = $_POST['phone_no'];
-    $address = $_POST['address'];
+    $region = $_POST['region'];
+    $province = $_POST['province'];
+    $city = $_POST['city'];
+    $barangay = $_POST['barangay'];
+    $street = $_POST['street'];
+    $house_number = $_POST['house_number'];
+
 
     // Validate email to ensure it's a Gmail address
     if (!preg_match('/^[a-zA-Z0-9._%+-]+@gmail\\.com$/', $email)) {
@@ -32,8 +38,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_customer'])) {
             $error_message = "All fields are required.";
         } else {
             // Prepare and execute the SQL query
-            $sql = "INSERT INTO custumer_info (last_name, first_name, middle_initial, gender, birthday, email, phone_no, address, valid_id_image) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+           $sql = "INSERT INTO custumer_info (
+                last_name, first_name, middle_initial, gender, birthday, email, phone_no,
+                region, province, city, barangay, street, house_number, valid_id_image
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param(
+    "ssssssssssssss",
+    $last_name, $first_name, $middle_initial, $gender, $birthday, $email, $phone_no,
+    $region, $province, $city, $barangay, $street, $house_number, $valid_id_image
+);
+
 
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("sssssssss", $last_name, $first_name, $middle_initial, $gender, $birthday, $email, $phone_no, $address, $valid_id_image);
@@ -578,10 +594,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_customer'])) {
             Search
         </button>
 
-        <button type="button" class="md-button md-button-success" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+       <!--  <button type="button" class="md-button md-button-success" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
             <span class="material-icons" style="font-size: 18px;">person_add</span>
             Add Customer
-        </button>
+        </button> -->
     </form>
 
     <!-- Table Container -->
@@ -594,7 +610,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_customer'])) {
                     <th>First Name</th>
                     <th>Email</th>
                     <th>Phone</th>
-                    <th>Address</th>
                     <th>Status</th>
                     <th style="text-align: center;">Actions</th>
                 </tr>
@@ -641,7 +656,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_customer'])) {
                         echo "<td>" . htmlspecialchars($row['first_name']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['email']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['phone_no']) . "</td>";
-                        echo "<td>" . htmlspecialchars($row['address']) . "</td>";
                         echo "<td>";
                         $status_class = strtolower($row['status']);
                         echo "<span class='md-chip $status_class'>" . htmlspecialchars($row['status']) . "</span>";
@@ -651,9 +665,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_customer'])) {
                         echo "<button type='button' class='md-icon-button primary view-customer' data-bs-toggle='modal' data-bs-target='#customerModal' data-id='" . $row['customer_id'] . "' title='View Details'>";
                         echo "<span class='material-icons'>visibility</span>";
                         echo "</button>";
-                        echo "<button type='button' class='md-icon-button success edit-customer' data-bs-toggle='modal' data-bs-target='#editCustomerModal' data-id='" . $row['customer_id'] . "' title='Edit Customer'>";
+                       /* echo "<button type='button' class='md-icon-button success edit-customer' data-bs-toggle='modal' data-bs-target='#editCustomerModal' data-id='" . $row['customer_id'] . "' title='Edit Customer'>"; 
                         echo "<span class='material-icons'>edit</span>";
-                        echo "</button>";
+                        echo "</button>"; */
                         echo "</div>";
                         echo "</td>";
                         echo "</tr>";
@@ -740,12 +754,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_customer'])) {
                         <input type="date" id="birthday" class="form-control" name="birthday" required>
                     </div>
 
-                    <div class="form-group">
-                        <label for="email">Email Address *</label>
-                        <input type="email" id="email" class="form-control" name="email"
-                            pattern="[a-zA-Z0-9._%+-]+@gmail\.com"
-                            title="Please enter a valid Gmail address (e.g., example@gmail.com)" required>
-                    </div>
 
                     <div class="form-group">
                         <label for="phone_no">Phone Number *</label>
@@ -757,9 +765,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_customer'])) {
                     </div>
 
                     <div class="form-group">
-                        <label for="address">Address *</label>
-                        <input type="text" id="address" class="form-control" name="address" required>
-                    </div>
+    <label>Address *</label>
+    <div class="row">
+        <div class="col-md-6 mb-2">
+            <input type="text" class="form-control" name="region" placeholder="Region" required>
+        </div>
+        <div class="col-md-6 mb-2">
+            <input type="text" class="form-control" name="province" placeholder="Province" required>
+        </div>
+        <div class="col-md-6 mb-2">
+            <input type="text" class="form-control" name="city" placeholder="City" required>
+        </div>
+        <div class="col-md-6 mb-2">
+            <input type="text" class="form-control" name="barangay" placeholder="Barangay" required>
+        </div>
+        <div class="col-md-6 mb-2">
+            <input type="text" class="form-control" name="street" placeholder="Street" required>
+        </div>
+        <div class="col-md-6 mb-2">
+            <input type="text" class="form-control" name="house_number" placeholder="House Number" required>
+        </div>
+    </div>
+</div>
+
 
                     <div class="form-group">
                         <label for="valid_id_image">Valid ID Image</label>

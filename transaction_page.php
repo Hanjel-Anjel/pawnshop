@@ -40,6 +40,26 @@ if (!empty($conditions)) {
     $whereClause = "WHERE " . implode(' AND ', $conditions);
 }
 
+// Pagination setup
+$limit = 10; // Number of records per page
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+$offset = ($page - 1) * $limit;
+
+// Count total records (for pagination)
+$count_query = "
+    SELECT COUNT(*) as total
+    FROM transactions
+    JOIN custumer_info AS customers ON transactions.customer_id = customers.customer_id
+    JOIN items ON transactions.item_id = items.item_id
+    JOIN users ON transactions.handled_by = users.user_id
+    $whereClause
+";
+$count_result = $conn->query($count_query);
+$total_records = $count_result->fetch_assoc()['total'];
+$total_pages = ceil($total_records / $limit);
+
+
 // Fetch transactions
 $query = "
     SELECT 
@@ -59,7 +79,9 @@ $query = "
     JOIN users ON transactions.handled_by = users.user_id 
     $whereClause
     ORDER BY transactions.transaction_date DESC
+    LIMIT $limit OFFSET $offset
 ";
+
 
 $result = mysqli_query($conn, $query);
 
@@ -537,8 +559,29 @@ include('header.php');
         .empty-state {
             display: none !important;
         }
+
+         .pagination .page-link {
+            color: var(--primary-color);
+            border-radius: 6px;
+            margin: 0 3px;
+            border: 1px solid #ddd;
+            transition: 0.3s;
+        }
+
+        .pagination .page-link:hover {
+            background-color: var(--primary-light);
+            border-color: var(--primary-color);
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
     }
 </style>
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <div class="page-header">
     <div class="container">
@@ -605,75 +648,111 @@ include('header.php');
 
     <!-- Table -->
     <div class="print-container">
-        <div class="table-card">
-            <div class="table-responsive">
-                <table class="modern-table">
-                    <thead>
-                        <tr>
-                            <th>No.</th>
-                            <th>Transaction ID</th>
-                            <th>Customer</th>
-                            <th>Item</th>
-                            <th>Date</th>
-                            <th>Amount</th>
-                            <th>Type</th>
-                            <th>Payment</th>
-                            <th>Handler</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        if ($result && mysqli_num_rows($result) > 0) {
-                            $id = 1;
-                            while ($row = $result->fetch_assoc()) {
-                                $idDisplay = $id;
-                                $transactionId = str_pad($row['transaction_id'], 4, '0', STR_PAD_LEFT);
-                                $customerName = htmlspecialchars($row['first_name'] . ' ' . $row['last_name']);
-                                $itemModel = htmlspecialchars($row['model']);
-                                $transactionDate = date('M d, Y', strtotime($row['transaction_date']));
-                                $amount = number_format($row['amount'], 2);
-                                $paymentMethod = htmlspecialchars($row['payment_method']);
-                                $handlerName = htmlspecialchars($row['handler_first_name'] . ' ' . $row['handler_last_name']);
-                                $badgeClass = ($row['transaction_type'] === 'Loan') ? 'badge-card' : 'badge-cash';
-                                $transactionType = htmlspecialchars($row['transaction_type']);
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Transaction ID</th>
+                        <th>Customer</th>
+                        <th>Item</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Type</th>
+                        <th>Payment</th>
+                        <th>Handler</th>
+                        <th>Actions</th> <!-- ✅ Added Actions column -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    if ($result && mysqli_num_rows($result) > 0) {
+                        $id = 1;
+                        while ($row = $result->fetch_assoc()) {
+                            $idDisplay = $id;
+                            $transactionId = str_pad($row['transaction_id'], 4, '0', STR_PAD_LEFT);
+                            $customerName = htmlspecialchars($row['first_name'] . ' ' . $row['last_name']);
+                            $itemModel = htmlspecialchars($row['model']);
+                            $transactionDate = date('M d, Y', strtotime($row['transaction_date']));
+                            $amount = number_format($row['amount'], 2);
+                            $paymentMethod = htmlspecialchars($row['payment_method']);
+                            $handlerName = htmlspecialchars($row['handler_first_name'] . ' ' . $row['handler_last_name']);
+                            $badgeClass = ($row['transaction_type'] === 'Loan') ? 'badge-card' : 'badge-cash';
+                            $transactionType = htmlspecialchars($row['transaction_type']);
 
-                                echo "
-                                    <tr>
-                                        <td>{$idDisplay}</td>
-                                        <td><span class='transaction-id'>#{$transactionId}</span></td>
-                                        <td>{$customerName}</td>
-                                        <td>{$itemModel}</td>
-                                        <td>{$transactionDate}</td>
-                                        <td><span class='amount'>₱{$amount}</span></td>
-                                        <td><span class='badge {$badgeClass}'>{$transactionType}</span></td>
-                                        <td><span class='badge badge-online'>{$paymentMethod}</span></td>
-                                        <td>{$handlerName}</td>
-                                    </tr>
-                                ";
-
-                                $id++;
-                            }
-
-                        } else {
-                            echo "<tr><td colspan='9'>
-                                <div class='empty-state'>
-                                    <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
-                                        <circle cx='12' cy='12' r='10'></circle>
-                                        <line x1='12' y1='8' x2='12' y2='12'></line>
-                                        <line x1='12' y1='16' x2='12.01' y2='16'></line>
-                                    </svg>
-                                    <h3>No Transactions Found</h3>
-                                    <p>Try adjusting your filters</p>
-                                </div>
-                            </td></tr>";
+                            echo "
+                                <tr>
+                                    <td>{$idDisplay}</td>
+                                    <td><span class='transaction-id'>#{$transactionId}</span></td>
+                                    <td>{$customerName}</td>
+                                    <td>{$itemModel}</td>
+                                    <td>{$transactionDate}</td>
+                                    <td><span class='amount'>₱{$amount}</span></td>
+                                    <td><span class='badge {$badgeClass}'>{$transactionType}</span></td>
+                                    <td><span class='badge badge-online'>{$paymentMethod}</span></td>
+                                    <td>{$handlerName}</td>
+                                    <td>
+                                        <a href='view_transaction_details.php?transaction_id={$row['transaction_id']}' 
+                                           class='btn btn-sm btn-info'>
+                                           <i class='bi bi-eye'></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                            ";
+                            $id++;
                         }
-                        ?>
-                    </tbody>
-                </table>
-            </div>
+                    } else {
+                        echo "<tr><td colspan='10'>
+                            <div class='empty-state'>
+                                <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                                    <circle cx='12' cy='12' r='10'></circle>
+                                    <line x1='12' y1='8' x2='12' y2='12'></line>
+                                    <line x1='12' y1='16' x2='12.01' y2='16'></line>
+                                </svg>
+                                <h3>No Transactions Found</h3>
+                                <p>Try adjusting your filters</p>
+                            </div>
+                        </td></tr>";
+                    }
+                    ?>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
+
+<?php if ($total_pages > 1): ?>
+<div class="d-flex justify-content-center mt-4">
+    <nav>
+        <ul class="pagination">
+            <!-- Previous Button -->
+            <li class="page-item <?= ($page <= 1) ? 'disabled' : '' ?>">
+                <a class="page-link" 
+                   href="?page=<?= $page - 1 ?>&filter=<?= $filter ?>&transaction_type=<?= $transaction_type ?>">Previous</a>
+            </li>
+
+            <!-- Page Numbers -->
+            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                <li class="page-item <?= ($i == $page) ? 'active' : '' ?>">
+                    <a class="page-link" 
+                       href="?page=<?= $i ?>&filter=<?= $filter ?>&transaction_type=<?= $transaction_type ?>">
+                        <?= $i ?>
+                    </a>
+                </li>
+            <?php endfor; ?>
+
+            <!-- Next Button -->
+            <li class="page-item <?= ($page >= $total_pages) ? 'disabled' : '' ?>">
+                <a class="page-link" 
+                   href="?page=<?= $page + 1 ?>&filter=<?= $filter ?>&transaction_type=<?= $transaction_type ?>">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+<?php endif; ?>
+
+
 
 <!-- Auto-submit filter script -->
 <script>

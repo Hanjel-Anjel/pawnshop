@@ -20,7 +20,14 @@ if (isset($_GET['id'])) {
         echo "<p><strong>Phone:</strong> " . htmlspecialchars($customer['phone_no']) . "</p>";
         echo "</div>";
         echo "<div class='col-md-6'>";
-        echo "<p><strong>Address:</strong> " . htmlspecialchars($customer['address']) . "</p>";
+        echo "<p><strong>Address:</strong> " 
+            . htmlspecialchars($customer['house_number']) . " " 
+            . htmlspecialchars($customer['street']) . ", " 
+            . htmlspecialchars($customer['barangay']) . ", " 
+            . htmlspecialchars($customer['city']) . ", " 
+            . htmlspecialchars($customer['province']) . ", " 
+            . htmlspecialchars($customer['region']) . "</p>";
+
         echo "<p><strong>Gender:</strong> " . htmlspecialchars($customer['gender']) . "</p>";
         echo "<p><strong>Birthday:</strong> " . htmlspecialchars($customer['birthday']) . "</p>";
         echo "<p><strong>Status:</strong> " . htmlspecialchars($customer['status']) . "</p>";

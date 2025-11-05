@@ -73,11 +73,14 @@ if (isset($_POST['add_item'])) {
             INSERT INTO items (customer_id, brand, model, specifications, category_id, item_value, loan_amount, item_status, pawn_date, due_date, expiry_date, interest_rate, total_balance) 
             VALUES ('$customer_id', '$brand', '$model', '$specifications', '$category_id', '$item_value', '$loan_amount', '$status', '$pawn_date', '$due_date', '$expiry_date', '$compound_interest', '$total_balance')";
 
-        if (mysqli_query($conn, $insert_item_query)) {
-            $transaction_date = date('Y-m-d');
+            if (mysqli_query($conn, $insert_item_query)) {
+            // Record date and time (not just date)
+            $transaction_date = date('Y-m-d H:i:s');
+
             $insert_transaction_query = "
                 INSERT INTO transactions (customer_id, item_id, transaction_date, amount, payment_method, handled_by) 
                 VALUES ('$customer_id', LAST_INSERT_ID(), '$transaction_date', '$loan_amount', 'Cash', '$handled_by')";
+
 
             if (mysqli_query($conn, $insert_transaction_query)) {
                 // Call the function to update customer status

@@ -16,7 +16,7 @@ if (isset($_GET['id'])) {
         echo "<p><strong>Email:</strong> " . htmlspecialchars($customer['email']) . "</p>";
         echo "<p><strong>Phone:</strong> " . htmlspecialchars($customer['phone_no']) . "</p>";
 
-        // ✅ Combine address parts into one formatted string
+        // Combine address parts into one formatted string
         $full_address = $customer['house_number'] . ' ' .
                         $customer['street'] . ', Brgy. ' .
                         $customer['barangay'] . ', ' .

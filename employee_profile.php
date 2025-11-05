@@ -526,9 +526,9 @@ if (!$employee) {
           <a href="home_employee.php" class="btn btn-back btn-action">
             <i class="bi bi-arrow-left"></i> Back to Home
           </a>
-          <a href="employee_edit_profile.php" class="btn btn-edit btn-action">
+          <!-- <a href="employee_edit_profile.php" class="btn btn-edit btn-action">
             <i class="bi bi-pencil-square"></i> Edit Profile
-          </a>
+          </a> -->
         </div>
       </div>
     </div>
